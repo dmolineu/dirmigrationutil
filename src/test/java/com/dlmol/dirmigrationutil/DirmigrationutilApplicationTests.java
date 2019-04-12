@@ -17,16 +17,30 @@ public class DirMigrationUtilApplicationTests {
 
     @Test
     public void readFromNas() throws IOException {
-//        File source = new File("/Volumes/SystemStuff/Windows 7/en_windows_7_professional_with_sp1_x64_dvd_u_676939.iso"); // 3GB
-        File source = new File("/Volumes/Videos/GOPR0107_1492876862683_high.MP4"); // 179 MB
+        File source = new File("/Volumes/SystemStuff/Windows7/en_windows_7_professional_with_sp1_x64_dvd_u_676939.iso"); // 3GB
+//        File source = new File("/Volumes/Videos/GOPR0107_1492876862683_high.MP4"); // 179 MB
         File targetDir = new File("/Users/dmolineu/Desktop/");
         testCopyFile(source, targetDir);
     }
 
     @Test
     public void writeToNas() throws IOException {
-        File source = new File("/Users/dmolineu/Movies/Family 001.avi");
+//        File source = new File("/Users/dmolineu/Movies/Family 001.avi");
+        File source = new File("/Users/dmolineu/Movies/Desktop/en_windows_7_professional_with_sp1_x64_dvd_u_676939.iso");
         File targetDir = new File("/Volumes/Temp/");
+        testCopyFile(source, targetDir);
+    }
+
+    @Test
+    public void toAndFromNas() throws IOException {
+        File source = new File("/Volumes/SystemStuff/Windows7/en_windows_7_professional_with_sp1_x64_dvd_u_676939.iso"); // 3GB
+//        File source = new File("/Volumes/Videos/GOPR0107_1492876862683_high.MP4"); // 179 MB
+        File targetDir = new File("/Users/dmolineu/Desktop/");
+        testCopyFile(source, targetDir);
+
+//        File source = new File("/Users/dmolineu/Movies/Family 001.avi");
+        source = new File("/Users/dmolineu/Movies/Desktop/en_windows_7_professional_with_sp1_x64_dvd_u_676939.iso");
+        targetDir = new File("/Volumes/Temp/");
         testCopyFile(source, targetDir);
     }
 
