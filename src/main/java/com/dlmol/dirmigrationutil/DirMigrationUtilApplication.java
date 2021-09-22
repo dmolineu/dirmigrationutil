@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -109,9 +110,7 @@ public class DirMigrationUtilApplication {
         if (targetDir2 != null)
             System.out.println("Target dir #2: " + targetDir2.getAbsolutePath() + "\n");
 
-        final Predicate<File> imageFilter = f -> f.isFile() &&
-                (FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase().contains("jpg") ||
-                        FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase().contains("nef"));
+        final Predicate<File> imageFilter = getImageFilter();
 
         long ms;
 
@@ -122,10 +121,7 @@ public class DirMigrationUtilApplication {
             System.out.println("Attempt #" + (i++) + " for " + targetDir1.getAbsolutePath());
             ms = System.currentTimeMillis();
             try {
-                targetFiles = Files.walk(targetDir1.toPath())
-                        .map(Path::toFile)
-                        .filter(imageFilter)
-                        .collect(Collectors.toSet());
+                targetFiles = getFilteredFiles(targetDir1, imageFilter);
                 System.out.println("Found " + targetFiles.size() + " files in: " + targetDir1.getAbsolutePath() + ", " +
                         (System.currentTimeMillis() - ms) + " ms.");
                 error = false;
@@ -137,10 +133,7 @@ public class DirMigrationUtilApplication {
 
         if (targetDir2 != null) {
             ms = System.currentTimeMillis();
-            final Set<File> target2Files = Files.walk(targetDir2.toPath())
-                    .map(Path::toFile)
-                    .filter(imageFilter)
-                    .collect(Collectors.toSet());
+            final Set<File> target2Files = getFilteredFiles(targetDir2, imageFilter);
             System.out.println("Found " + target2Files.size() + " files in: " + targetDir2.getAbsolutePath() + ", " +
                     (System.currentTimeMillis() - ms) + " ms.");
             targetFiles.addAll(target2Files);
@@ -159,10 +152,7 @@ public class DirMigrationUtilApplication {
 */
 
         ms = System.currentTimeMillis();
-        Set<File> sourceFiles = Files.walk(sourceDir.toPath())
-                .map(Path::toFile)
-                .filter(imageFilter)
-                .collect(Collectors.toSet());
+        Set<File> sourceFiles = getFilteredFiles(sourceDir, imageFilter);
         System.out.println("Found " + sourceFiles.size() + " files in source (" + sourceDir.getAbsolutePath() + "), " +
                 (System.currentTimeMillis() - ms) + " ms.");
 
@@ -194,6 +184,20 @@ public class DirMigrationUtilApplication {
         });
 */
         System.out.println("Done after: " + ((System.currentTimeMillis() - startMs) / 1000) + " seconds.");
+    }
+
+    public static Set<File> getFilteredFiles(File targetDir, Predicate<File> fileFilter) throws IOException {
+        return Files.walk(targetDir.toPath())
+                .map(Path::toFile)
+                .filter(fileFilter)
+                .collect(Collectors.toSet());
+    }
+
+    public static Predicate<File> getImageFilter() {
+        final Predicate<File> imageFilter = f -> f.isFile() &&
+                (FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase().contains("jpg") ||
+                        FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase().contains("nef"));
+        return imageFilter;
     }
 
 }
