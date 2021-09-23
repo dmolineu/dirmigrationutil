@@ -71,9 +71,11 @@ public class DirectoryCompareApplication {
                 .sorted()
                 .collect(Collectors.toList());
         missingFiles.forEach(System.out::println);
+        File outputFile = new File("MissingFiles-" + System.currentTimeMillis() + ".txt");
         Files.write(
-                new File("MissingFiles-" + System.currentTimeMillis() + ".txt").toPath(),
+                outputFile.toPath(),
                 StringUtils.join(missingFiles, "\n").getBytes());
+        System.out.println("Writing missingFiles to: " + outputFile.getAbsolutePath());
 
         System.out.println("Done after " + (System.currentTimeMillis() - startMs) + " ms.");
         return filesNotInTarget;

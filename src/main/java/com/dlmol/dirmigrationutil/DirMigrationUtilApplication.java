@@ -203,7 +203,7 @@ public class DirMigrationUtilApplication {
             String extn = FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase();
             return f.isFile() &&
                     f.length() > 100000 &&
-                    (extn.contains("jpg") || extn.contains("nef"));
+                    (extn.contains("jpg") || extn.contains("nef") || extn.contains("mp4") || extn.contains("mkv"));
         };
         return imageFilter;
     }
