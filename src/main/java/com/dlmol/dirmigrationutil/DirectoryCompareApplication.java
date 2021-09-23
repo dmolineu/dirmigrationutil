@@ -24,15 +24,18 @@ import static com.dlmol.dirmigrationutil.util.ChecksumUtil.getMd5Checksum;
 @SpringBootApplication
 public class DirectoryCompareApplication {
 
-    private static MessageDigest md5Digest = null;
-
     public static void main(String[] args) throws IOException {
-        args = new String[]{"D:\\DCIM", "\\\\192.168.1.4\\Photos"};
+//        args = new String[]{"D:\\DCIM", "\\\\192.168.1.4\\Photos", "false"};
+        if (args == null || args.length != 3) {
+            System.out.println("Incorrect args! Usage should be like (source dir, target dir, use persistent MD5 files): " +
+                    "D:\\\\DCIM\" \\\\192.168.1.4\\Photos false");
+            return;
+        }
         SpringApplication.run(DirectoryCompareApplication.class, args);
-        findImageFilesMissingInTarget(new File(args[0]), new File(args[1]));
+        findImageFilesMissingInTarget(new File(args[0]), new File(args[1]), Boolean.valueOf(args[2]));
     }
 
-    public static List<File> findImageFilesMissingInTarget(File sourceDir, File targetDir) throws IOException {
+    public static List<File> findImageFilesMissingInTarget(File sourceDir, File targetDir, boolean usePersistentChecksumFiles) throws IOException {
         long startMs = System.currentTimeMillis();
         List<File> filesNotInTarget = new ArrayList<>();
         if (!sourceDir.isDirectory()) {
@@ -44,20 +47,21 @@ public class DirectoryCompareApplication {
             return filesNotInTarget;
         }
         System.out.println("\nSource dir: " + sourceDir.getAbsolutePath() +
-                "\nTarget dir: " + targetDir.getAbsolutePath());
+                "\nTarget dir: " + targetDir.getAbsolutePath() +
+                "\nusePersistentChecksumFiles: " + usePersistentChecksumFiles);
 
         System.out.println("Getting list of files from source...");
         Set<File> sourceFiles = DirMigrationUtilApplication.getFilteredFiles(sourceDir, DirMigrationUtilApplication.getImageFilter());
         System.out.println("Found " + sourceFiles.size() + " files in source.");
         System.out.println("Hashing source files...");
-        final Map<String, HashedFile> hashedSourceFiles = getHashedFiles(sourceFiles, true);
+        final Map<String, HashedFile> hashedSourceFiles = getHashedFiles(sourceFiles, usePersistentChecksumFiles);
         final Set<String> sourceFileNames = hashedSourceFiles.values().stream().map(h -> h.getName()).collect(Collectors.toSet());
 
         System.out.println("Getting list of files from target...");
         Set<File> targetFiles = DirMigrationUtilApplication.getFilteredFiles(targetDir, DirMigrationUtilApplication.getImageFilter(), sourceFileNames);
         System.out.println("Found " + targetFiles.size() + " files in target.");
         System.out.println("Hashing target files...");
-        Map<String, HashedFile> hashedTargetFiles = getHashedFiles(targetFiles, sourceFileNames, true);
+        Map<String, HashedFile> hashedTargetFiles = getHashedFiles(targetFiles, sourceFileNames, usePersistentChecksumFiles);
 
         System.out.println("Looking for files in source missing in target...");
         List<HashedFile> sourceFilesMissingInTarget = hashedSourceFiles.keySet().stream()
