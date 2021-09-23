@@ -118,7 +118,7 @@ public class DirectoryCompareApplication {
         final long remainingMins = secsRemaining.intValue() / 60;
         final long remainingSecs = secsRemaining.intValue() % 60;
         final String progressString = "Processing file #" + currentIndex + " of " + size + ", ~" + pct.intValue() + "%. Elapsed time: " +
-                elapsed + " ms. Est. time remaining: " + remainingMins + ":" + remainingSecs;
+                elapsed + " ms. Estimated time remaining: " + remainingMins + ":" + remainingSecs;
         System.out.println(progressString);
         return progressString;
     }
