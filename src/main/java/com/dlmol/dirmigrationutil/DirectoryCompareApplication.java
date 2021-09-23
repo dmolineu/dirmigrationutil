@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,11 +64,16 @@ public class DirectoryCompareApplication {
                         .filter(checksum -> !hashedTargetFiles.containsKey(checksum)) //File already exists in target if checksum matches a file
                         .map(checksum -> hashedSourceFiles.get(checksum))
                                 .collect(Collectors.toList());
+
         System.out.println("Found " + sourceFilesMissingInTarget.size() + " files in source missing in target:");
-        sourceFilesMissingInTarget.stream()
+        List<String> missingFiles = sourceFilesMissingInTarget.stream()
                 .map(h -> h.getFile().getAbsolutePath() + " (" + h.getChecksum() + ")")
                 .sorted()
-                .forEach(System.out::println);
+                .collect(Collectors.toList());
+        missingFiles.forEach(System.out::println);
+        Files.write(
+                new File("MissingFiles-" + System.currentTimeMillis() + ".txt").toPath(),
+                StringUtils.join(missingFiles, "\n").getBytes());
 
         System.out.println("Done after " + (System.currentTimeMillis() - startMs) + " ms.");
         return filesNotInTarget;
