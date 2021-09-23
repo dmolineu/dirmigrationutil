@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -106,19 +107,21 @@ public class DirectoryCompareApplication {
         return hashedFiles;
     }
 
-    protected static void printProgress(int currentIndex, int size, long ms) {
+    protected static String printProgress(int currentIndex, int size, long ms) {
         if (currentIndex % 10 != 0) {
-            return;
+            return null;
         }
-        long elapsed = System.currentTimeMillis() - ms;
-        int pct = currentIndex * 100 / size;
-        long msRemaining = (1 - (pct / 100)) * elapsed;
-        long remainingMins = msRemaining / 60000;
-        long remainingSecs = (msRemaining / 60000) % 60000;
-        System.out.println("Processing file #" + currentIndex + " of " + size + ", ~" + pct + "%. Elapsed time: " +
-                elapsed + " ms. Est. second remaining: " + remainingMins + ":" + remainingSecs);
+        final long elapsed = System.currentTimeMillis() - ms;
+        final BigDecimal msPerItem = new BigDecimal (((double) elapsed) / currentIndex);
+        final BigDecimal secsRemaining = msPerItem.multiply(BigDecimal.valueOf(size - currentIndex)).divide(BigDecimal.valueOf(1000));
+        final BigDecimal pct = new BigDecimal (((double) currentIndex) * 100 / size);
+        final long remainingMins = secsRemaining.intValue() / 60;
+        final long remainingSecs = secsRemaining.intValue() % 60;
+        final String progressString = "Processing file #" + currentIndex + " of " + size + ", ~" + pct.intValue() + "%. Elapsed time: " +
+                elapsed + " ms. Est. time remaining: " + remainingMins + ":" + remainingSecs;
+        System.out.println(progressString);
+        return progressString;
     }
-
 }
 
 @AllArgsConstructor
