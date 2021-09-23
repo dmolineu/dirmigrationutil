@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -193,11 +192,18 @@ public class DirMigrationUtilApplication {
                 .collect(Collectors.toSet());
     }
 
+    public static Set<File> getFilteredFiles(File targetDir, Predicate<File> fileFilter, Set<String> filterFileNames) throws IOException {
+        return Files.walk(targetDir.toPath())
+                .map(Path::toFile)
+                .filter(fileFilter)
+                .filter(f -> filterFileNames != null && filterFileNames.contains(f.getName()))
+                .collect(Collectors.toSet());
+    }
+
     public static Predicate<File> getImageFilter() {
         final Predicate<File> imageFilter = f -> f.isFile() &&
                 (FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase().contains("jpg") ||
                         FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase().contains("nef"));
         return imageFilter;
     }
-
 }

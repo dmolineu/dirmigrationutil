@@ -8,21 +8,40 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class ChecksumUtil {
+
+    private static MessageDigest md;
+
+    static {
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static String getMd5Checksum(File file) {
         long startMs = System.currentTimeMillis();
         if (file == null) {
             System.out.println("getMd5Checksum(): File is null!");
             return null;
-        } else if (file.exists() == false){
-            System.out.println("getMd5Checksum(): File '" + file.getAbsolutePath() + "' does NOT exist!");
-            return null;
+        } if (!file.exists()){
+            for (int i = 0; i < 5; i++) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (file.exists()){
+                    break;
+                }
+            }
+            if (!file.exists()) {
+                System.out.println("getMd5Checksum(): File '" + file.getAbsolutePath() + "' does NOT exist!");
+                return null;
+            }
         }
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println("getMd5Checksum(): Unable to call 'MessageDigest.getInstance(\"MD5\")'. " + e.getMessage());
-            e.printStackTrace();
+        if (md == null) {
+            System.out.println("getMd5Checksum(" + file.getAbsolutePath() + "): MessageDigest is null!");
             return null;
         }
         try {

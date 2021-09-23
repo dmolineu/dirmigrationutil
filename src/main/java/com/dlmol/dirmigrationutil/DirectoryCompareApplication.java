@@ -47,13 +47,14 @@ public class DirectoryCompareApplication {
         Set<File> sourceFiles = DirMigrationUtilApplication.getFilteredFiles(sourceDir, DirMigrationUtilApplication.getImageFilter());
         System.out.println("Found " + sourceFiles.size() + " files in source.");
         System.out.println("Hashing source files...");
-        Map<String, HashedFile> hashedSourceFiles = getHashedFiles(sourceFiles);
+        final Map<String, HashedFile> hashedSourceFiles = getHashedFiles(sourceFiles);
+        final Set<String> sourceFileNames = hashedSourceFiles.values().stream().map(h -> h.getName()).collect(Collectors.toSet());
 
         System.out.println("Getting list of files from target...");
-        Set<File> targetFiles = DirMigrationUtilApplication.getFilteredFiles(targetDir, DirMigrationUtilApplication.getImageFilter());
+        Set<File> targetFiles = DirMigrationUtilApplication.getFilteredFiles(targetDir, DirMigrationUtilApplication.getImageFilter(), sourceFileNames);
         System.out.println("Found " + targetFiles.size() + " files in target.");
         System.out.println("Hashing target files...");
-        Map<String, HashedFile> hashedTargetFiles = getHashedFiles(targetFiles, hashedSourceFiles.values().stream().map(h -> h.getName()).collect(Collectors.toSet()));
+        Map<String, HashedFile> hashedTargetFiles = getHashedFiles(targetFiles, sourceFileNames);
 
         System.out.println("Looking for files in source missing in target...");
         List<HashedFile> sourceFilesMissingInTarget = hashedSourceFiles.keySet().stream()
@@ -61,7 +62,10 @@ public class DirectoryCompareApplication {
                         .map(checksum -> hashedSourceFiles.get(checksum))
                                 .collect(Collectors.toList());
         System.out.println("Found " + sourceFilesMissingInTarget.size() + " files in source missing in target:");
-        sourceFilesMissingInTarget.stream().map(h -> h.getFile().getAbsolutePath()).sorted().forEach(System.out::println);
+        sourceFilesMissingInTarget.stream()
+                .map(h -> h.getFile().getAbsolutePath() + " (" + h.getChecksum() + ")")
+                .sorted()
+                .forEach(System.out::println);
 
         System.out.println("Done after " + (System.currentTimeMillis() - startMs) + " ms.");
         return filesNotInTarget;
@@ -72,10 +76,7 @@ public class DirectoryCompareApplication {
         HashMap<String, HashedFile> hashedFiles = new HashMap(files.size());
         List<File> fileList = new ArrayList<>(files);
         for (int i = 0; i < fileList.size(); i++) {
-            if (i > 0 && i % 10 == 0) {
-                System.out.println("Processing file #" + i + " of " + files.size() + ", ~" + (i * 100 / files.size()) +
-                        "%. Elapsed time: " + (System.currentTimeMillis() - ms) + " ms.");
-            }
+            printProgress(files.size(), ms, i);
             File f = fileList.get(i);
             final String md5checksum = ChecksumUtil.getMd5Checksum(f);
             hashedFiles.put(md5checksum, new HashedFile(f, f.getName(), md5checksum, f.length()));
@@ -90,10 +91,7 @@ public class DirectoryCompareApplication {
         HashMap<String, HashedFile> hashedFiles = new HashMap();
         List<File> fileList = new ArrayList<>(files);
         for (int i = 0; i < fileList.size(); i++) {
-            if (i > 0 && i % 10 == 0) {
-                System.out.println("* Processing file #" + i + " of " + files.size() + ", ~" + (i * 100 / files.size()) +
-                        "%. Elapsed time: " + (System.currentTimeMillis() - ms) + " ms.");
-            }
+            printProgress(files.size(), ms, i);
             File f = fileList.get(i);
             if (fileNames.contains(f.getName())){
                 final String md5checksum = ChecksumUtil.getMd5Checksum(f);
@@ -106,6 +104,19 @@ public class DirectoryCompareApplication {
                 " total files found in target.");
         System.out.println("getHashedFiles(): Took " + (System.currentTimeMillis() - ms) + " ms.");
         return hashedFiles;
+    }
+
+    private static void printProgress(int size, long ms, int i) {
+        if (i % 10 != 0) {
+            return;
+        }
+        long elapsed = System.currentTimeMillis() - ms;
+        int pct = i * 100 / size;
+        long remainingMins = 100 / pct * elapsed / 1000 / 60;
+        long remainingSecs = (100 / pct * elapsed / 1000) % 60;
+        System.out.println("Processing file #" + i + " of " + size + ", ~" + pct +
+                "%. Elapsed time: " + elapsed + " ms. Est. second remaining: " + remainingMins +
+                " minutes and " + remainingSecs + " seconds.");
     }
 
 }
