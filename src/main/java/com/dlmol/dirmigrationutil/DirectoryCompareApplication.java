@@ -76,7 +76,7 @@ public class DirectoryCompareApplication {
         HashMap<String, HashedFile> hashedFiles = new HashMap(files.size());
         List<File> fileList = new ArrayList<>(files);
         for (int i = 0; i < fileList.size(); i++) {
-            printProgress(files.size(), ms, i);
+            printProgress(i, files.size(), ms);
             File f = fileList.get(i);
             final String md5checksum = ChecksumUtil.getMd5Checksum(f);
             hashedFiles.put(md5checksum, new HashedFile(f, f.getName(), md5checksum, f.length()));
@@ -91,7 +91,7 @@ public class DirectoryCompareApplication {
         HashMap<String, HashedFile> hashedFiles = new HashMap();
         List<File> fileList = new ArrayList<>(files);
         for (int i = 0; i < fileList.size(); i++) {
-            printProgress(files.size(), ms, i);
+            printProgress(i, files.size(), ms);
             File f = fileList.get(i);
             if (fileNames.contains(f.getName())){
                 final String md5checksum = ChecksumUtil.getMd5Checksum(f);
@@ -106,17 +106,17 @@ public class DirectoryCompareApplication {
         return hashedFiles;
     }
 
-    private static void printProgress(int size, long ms, int i) {
-        if (i % 10 != 0) {
+    protected static void printProgress(int currentIndex, int size, long ms) {
+        if (currentIndex % 10 != 0) {
             return;
         }
         long elapsed = System.currentTimeMillis() - ms;
-        int pct = i * 100 / size;
-        long remainingMins = 100 / pct * elapsed / 1000 / 60;
-        long remainingSecs = (100 / pct * elapsed / 1000) % 60;
-        System.out.println("Processing file #" + i + " of " + size + ", ~" + pct +
-                "%. Elapsed time: " + elapsed + " ms. Est. second remaining: " + remainingMins +
-                " minutes and " + remainingSecs + " seconds.");
+        int pct = currentIndex * 100 / size;
+        long msRemaining = (1 - (pct / 100)) * elapsed;
+        long remainingMins = msRemaining / 60000;
+        long remainingSecs = (msRemaining / 60000) % 60000;
+        System.out.println("Processing file #" + currentIndex + " of " + size + ", ~" + pct + "%. Elapsed time: " +
+                elapsed + " ms. Est. second remaining: " + remainingMins + ":" + remainingSecs);
     }
 
 }
