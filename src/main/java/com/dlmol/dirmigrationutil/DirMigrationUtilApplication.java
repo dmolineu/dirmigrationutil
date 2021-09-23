@@ -109,8 +109,6 @@ public class DirMigrationUtilApplication {
         if (targetDir2 != null)
             System.out.println("Target dir #2: " + targetDir2.getAbsolutePath() + "\n");
 
-        final Predicate<File> imageFilter = getImageFilter();
-
         long ms;
 
         boolean error = false;
@@ -120,7 +118,7 @@ public class DirMigrationUtilApplication {
             System.out.println("Attempt #" + (i++) + " for " + targetDir1.getAbsolutePath());
             ms = System.currentTimeMillis();
             try {
-                targetFiles = getFilteredFiles(targetDir1, imageFilter);
+                targetFiles = getFilteredFiles(targetDir1, getImageFilter());
                 System.out.println("Found " + targetFiles.size() + " files in: " + targetDir1.getAbsolutePath() + ", " +
                         (System.currentTimeMillis() - ms) + " ms.");
                 error = false;
@@ -132,7 +130,7 @@ public class DirMigrationUtilApplication {
 
         if (targetDir2 != null) {
             ms = System.currentTimeMillis();
-            final Set<File> target2Files = getFilteredFiles(targetDir2, imageFilter);
+            final Set<File> target2Files = getFilteredFiles(targetDir2, getImageFilter());
             System.out.println("Found " + target2Files.size() + " files in: " + targetDir2.getAbsolutePath() + ", " +
                     (System.currentTimeMillis() - ms) + " ms.");
             targetFiles.addAll(target2Files);
@@ -151,7 +149,7 @@ public class DirMigrationUtilApplication {
 */
 
         ms = System.currentTimeMillis();
-        Set<File> sourceFiles = getFilteredFiles(sourceDir, imageFilter);
+        Set<File> sourceFiles = getFilteredFiles(sourceDir, getImageFilter());
         System.out.println("Found " + sourceFiles.size() + " files in source (" + sourceDir.getAbsolutePath() + "), " +
                 (System.currentTimeMillis() - ms) + " ms.");
 
@@ -201,9 +199,12 @@ public class DirMigrationUtilApplication {
     }
 
     public static Predicate<File> getImageFilter() {
-        final Predicate<File> imageFilter = f -> f.isFile() &&
-                (FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase().contains("jpg") ||
-                        FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase().contains("nef"));
+        final Predicate<File> imageFilter = f -> {
+            String extn = FilenameUtils.getExtension(f.getAbsolutePath()).toLowerCase();
+            return f.isFile() &&
+                    f.length() > 100000 &&
+                    (extn.contains("jpg") || extn.contains("nef"));
+        };
         return imageFilter;
     }
 }
