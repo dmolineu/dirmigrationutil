@@ -1,6 +1,5 @@
 package com.dlmol.dirmigrationutil;
 
-import com.dlmol.dirmigrationutil.util.ChecksumUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,18 +17,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.dlmol.dirmigrationutil.util.ChecksumUtil.getMd5Checksum;
+
 @SpringBootApplication
 public class DirectoryCompareApplication {
 
     private static MessageDigest md5Digest = null;
 
-    public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
+    public static void main(String[] args) throws IOException {
         args = new String[]{"D:\\DCIM", "\\\\192.168.1.4\\Photos"};
         SpringApplication.run(DirectoryCompareApplication.class, args);
         findImageFilesMissingInTarget(new File(args[0]), new File(args[1]));
     }
 
-    public static List<File> findImageFilesMissingInTarget(File sourceDir, File targetDir) throws IOException, NoSuchAlgorithmException {
+    public static List<File> findImageFilesMissingInTarget(File sourceDir, File targetDir) throws IOException {
         long startMs = System.currentTimeMillis();
         List<File> filesNotInTarget = new ArrayList<>();
         if (!sourceDir.isDirectory()) {
@@ -48,14 +48,14 @@ public class DirectoryCompareApplication {
         Set<File> sourceFiles = DirMigrationUtilApplication.getFilteredFiles(sourceDir, DirMigrationUtilApplication.getImageFilter());
         System.out.println("Found " + sourceFiles.size() + " files in source.");
         System.out.println("Hashing source files...");
-        final Map<String, HashedFile> hashedSourceFiles = getHashedFiles(sourceFiles);
+        final Map<String, HashedFile> hashedSourceFiles = getHashedFiles(sourceFiles, true);
         final Set<String> sourceFileNames = hashedSourceFiles.values().stream().map(h -> h.getName()).collect(Collectors.toSet());
 
         System.out.println("Getting list of files from target...");
         Set<File> targetFiles = DirMigrationUtilApplication.getFilteredFiles(targetDir, DirMigrationUtilApplication.getImageFilter(), sourceFileNames);
         System.out.println("Found " + targetFiles.size() + " files in target.");
         System.out.println("Hashing target files...");
-        Map<String, HashedFile> hashedTargetFiles = getHashedFiles(targetFiles, sourceFileNames);
+        Map<String, HashedFile> hashedTargetFiles = getHashedFiles(targetFiles, sourceFileNames, true);
 
         System.out.println("Looking for files in source missing in target...");
         List<HashedFile> sourceFilesMissingInTarget = hashedSourceFiles.keySet().stream()
@@ -72,14 +72,14 @@ public class DirectoryCompareApplication {
         return filesNotInTarget;
     }
 
-    private static Map<String, HashedFile> getHashedFiles(Set<File> files) {
+    private static Map<String, HashedFile> getHashedFiles(Set<File> files, boolean usePersistentChecksumFiles) {
         long ms = System.currentTimeMillis();
         HashMap<String, HashedFile> hashedFiles = new HashMap(files.size());
         List<File> fileList = new ArrayList<>(files);
         for (int i = 0; i < fileList.size(); i++) {
             printProgress(i, files.size(), ms);
             File f = fileList.get(i);
-            final String md5checksum = ChecksumUtil.getMd5Checksum(f);
+            final String md5checksum = getMd5Checksum(f, usePersistentChecksumFiles);
             hashedFiles.put(md5checksum, new HashedFile(f, f.getName(), md5checksum, f.length()));
         }
         System.out.println("getHashedFiles(): Took " + (System.currentTimeMillis() - ms) + " ms.");
@@ -87,7 +87,7 @@ public class DirectoryCompareApplication {
     }
 
     //Get HashedFile Map, only include files where names match
-    private static Map<String, HashedFile> getHashedFiles(Set<File> files, Set<String> fileNames) {
+    private static Map<String, HashedFile> getHashedFiles(Set<File> files, Set<String> fileNames, boolean usePersistentChecksumFiles) {
         long ms = System.currentTimeMillis();
         HashMap<String, HashedFile> hashedFiles = new HashMap();
         List<File> fileList = new ArrayList<>(files);
@@ -95,7 +95,7 @@ public class DirectoryCompareApplication {
             printProgress(i, files.size(), ms);
             File f = fileList.get(i);
             if (fileNames.contains(f.getName())){
-                final String md5checksum = ChecksumUtil.getMd5Checksum(f);
+                final String md5checksum = getMd5Checksum(f, usePersistentChecksumFiles);
                 hashedFiles.put(md5checksum, new HashedFile(f, f.getName(), md5checksum, f.length()));
             } else {
                 System.out.println("Skipping " + f.getAbsolutePath() + " because its name is not in the list of names from source files.");
@@ -108,7 +108,7 @@ public class DirectoryCompareApplication {
     }
 
     protected static String printProgress(int currentIndex, int size, long ms) {
-        if (currentIndex % 10 != 0) {
+        if (currentIndex == 0 || currentIndex % 10 != 0) {
             return null;
         }
         final long elapsed = System.currentTimeMillis() - ms;
