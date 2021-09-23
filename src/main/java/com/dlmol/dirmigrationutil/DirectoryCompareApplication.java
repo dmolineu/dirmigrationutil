@@ -3,6 +3,7 @@ package com.dlmol.dirmigrationutil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -118,7 +119,8 @@ public class DirectoryCompareApplication {
         final long remainingMins = secsRemaining.intValue() / 60;
         final long remainingSecs = secsRemaining.intValue() % 60;
         final String progressString = "Processing file #" + currentIndex + " of " + size + ", ~" + pct.intValue() + "%. Elapsed time: " +
-                elapsed + " ms. Estimated time remaining: " + remainingMins + ":" + remainingSecs;
+                elapsed + " ms. Estimated time remaining: " + remainingMins + ":" +
+                StringUtils.leftPad(String.valueOf(remainingSecs), 2, '0');
         System.out.println(progressString);
         return progressString;
     }
