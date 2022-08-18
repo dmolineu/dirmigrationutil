@@ -81,8 +81,12 @@ public class DirectoryCompareApplication {
                 StringUtils.join(missingFiles, "\n").getBytes());
         System.out.println("Writing missingFiles to: " + outputFile.getAbsolutePath());
 
-        System.out.println("Done after " + (System.currentTimeMillis() - startMs) + " ms.");
+        System.out.println(getDoneAfter(startMs));
         return filesNotInTarget;
+    }
+
+    private static String getDoneAfter(long startMs) {
+        return "Done after " + ((System.currentTimeMillis() - startMs) / 1000) + " seconds.";
     }
 
     private static Map<String, HashedFile> getHashedFiles(Set<File> files, boolean usePersistentChecksumFiles) {
@@ -95,7 +99,7 @@ public class DirectoryCompareApplication {
             final String md5checksum = getMd5Checksum(f, usePersistentChecksumFiles);
             hashedFiles.put(md5checksum, new HashedFile(f, f.getName(), md5checksum, f.length()));
         }
-        System.out.println("getHashedFiles(): Took " + (System.currentTimeMillis() - ms) + " ms.");
+        System.out.println("getHashedFiles(): " + getDoneAfter(ms));
         return hashedFiles;
     }
 
@@ -116,7 +120,7 @@ public class DirectoryCompareApplication {
         }
         System.out.println("Hashed " + hashedFiles.size() + " (names matched those from source) of " + files.size() +
                 " total files found in target.");
-        System.out.println("getHashedFiles(): Took " + (System.currentTimeMillis() - ms) + " ms.");
+        System.out.println("getHashedFiles(): " + getDoneAfter(ms));
         return hashedFiles;
     }
 
