@@ -15,10 +15,10 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@SpringBootApplication
+//@SpringBootApplication
 public class DirMigrationUtilApplication {
 
-    public static void main(String[] args) throws IOException {
+    public static void mainX(String[] args) throws IOException {
         args = new String[]{"/Users/dmolineu/Pictures/", "/Volumes/dls_docs/My Pictures/", "/Volumes/Photos/"};
         SpringApplication.run(DirMigrationUtilApplication.class, args);
         System.out.println("args: " + Arrays.asList(args).stream().collect(Collectors.joining(", ")));
